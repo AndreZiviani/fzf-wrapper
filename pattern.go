@@ -7,10 +7,7 @@ import (
 
 func MMatchChunk(chunk *MyChunk, pattern [][]rune) []MyResult {
 	matches := []MyResult{}
-	count := len(s)
-	for idx := 0; idx < count; idx++ {
-		//items := GetUnexportedField(reflect.ValueOf(chunk).Elem().FieldByName("items")).([fzfChunkSize]fzf.Item) //TODO
-		//MyItems := NewMyItemList(items)
+	for idx := 0; idx < chunk.count; idx++ {
 		items := chunk.items
 		match, _, _ := MMatchItem(&items[idx], pattern)
 		if match != nil {

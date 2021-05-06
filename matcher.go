@@ -40,5 +40,5 @@ func MScan(chunks []*MyChunk, pattern [][]rune) [][]MyResult {
 		allMatches = append(allMatches, slice)
 	}
 
-	return allMatches //era fzf.NewMerger(nil, allMatches, false, false)
+	return allMatches
 }
