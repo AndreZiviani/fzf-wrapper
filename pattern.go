@@ -7,8 +7,8 @@ import (
 
 func MatchChunk(chunk *Chunk, pattern [][]rune) []Result {
 	matches := []Result{}
+	items := chunk.items
 	for idx := 0; idx < chunk.count; idx++ {
-		items := chunk.items
 		match, _, _ := MatchItem(&items[idx], pattern)
 		if match != nil {
 			matches = append(matches, *match)

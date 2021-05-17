@@ -51,16 +51,14 @@ func (w *Wrapper) Fuzzy() (bool, error) {
 		chunk.push(trans, []byte(str))
 	}
 
-	merger := Scan(chunk, w.Pattern)
+	merger := MatchChunk(chunk, w.Pattern)
 
-	for _, list := range merger {
-		for _, v := range list {
-			result := WrapperResult{
-				Text:  v.item.AsString(false),
-				Score: v.points,
-			}
-			w.Results = append(w.Results, result)
+	for _, v := range merger {
+		result := WrapperResult{
+			Text:  v.item.AsString(false),
+			Score: v.points,
 		}
+		w.Results = append(w.Results, result)
 	}
 	return true, nil
 }
