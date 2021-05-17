@@ -5,18 +5,18 @@ import (
 	"github.com/junegunn/fzf/src/util"
 )
 
-type MyItem struct {
+type Item struct {
 	text        util.Chars
 	transformed *[]fzf.Token
 	origText    *[]byte
 }
 
-func (item *MyItem) TrimLength() uint16 {
+func (item *Item) TrimLength() uint16 {
 	return item.text.TrimLength()
 }
 
 // AsString returns the original string
-func (item *MyItem) AsString(stripAnsi bool) string {
+func (item *Item) AsString(stripAnsi bool) string {
 	if item.origText != nil {
 		return string(*item.origText)
 	}

@@ -5,11 +5,11 @@ import (
 	"github.com/junegunn/fzf/src/algo"
 )
 
-func MMatchChunk(chunk *MyChunk, pattern [][]rune) []MyResult {
-	matches := []MyResult{}
+func MatchChunk(chunk *Chunk, pattern [][]rune) []Result {
+	matches := []Result{}
 	for idx := 0; idx < chunk.count; idx++ {
 		items := chunk.items
-		match, _, _ := MMatchItem(&items[idx], pattern)
+		match, _, _ := MatchItem(&items[idx], pattern)
 		if match != nil {
 			matches = append(matches, *match)
 		}
@@ -18,19 +18,19 @@ func MMatchChunk(chunk *MyChunk, pattern [][]rune) []MyResult {
 	return matches
 }
 
-func MMatchItem(item *MyItem, pattern [][]rune) (*MyResult, []fzf.Offset, *[]int) {
-	offsets, bonus, pos := MextendedMatch(item, pattern)
+func MatchItem(item *Item, pattern [][]rune) (*Result, []fzf.Offset, *[]int) {
+	offsets, bonus, pos := extendedMatch(item, pattern)
 	if len(offsets) == len(pattern) {
-		result := MbuildResult(item, offsets, bonus)
+		result := buildResult(item, offsets, bonus)
 		return &result, offsets, pos
 	}
 
 	return nil, nil, nil
 }
 
-func MextendedMatch(item *MyItem, pattern [][]rune) ([]fzf.Offset, int, *[]int) {
+func extendedMatch(item *Item, pattern [][]rune) ([]fzf.Offset, int, *[]int) {
 
-	input := []MyToken{{&item.text, 0}}
+	input := []Token{{&item.text, 0}}
 
 	offsets := []fzf.Offset{}
 	var totalScore int
@@ -39,7 +39,7 @@ func MextendedMatch(item *MyItem, pattern [][]rune) ([]fzf.Offset, int, *[]int) 
 		matched := false
 		var offset fzf.Offset
 		var currentScore int
-		off, score, _ := Miter(input, term)
+		off, score, _ := iter(input, term)
 		if sidx := off[0]; sidx >= 0 {
 			offset, currentScore = off, score
 			matched = true
@@ -53,9 +53,9 @@ func MextendedMatch(item *MyItem, pattern [][]rune) ([]fzf.Offset, int, *[]int) 
 	return offsets, totalScore, nil
 }
 
-func Miter(tokens []MyToken, mypattern []rune) (fzf.Offset, int, *[]int) {
+func iter(tokens []Token, pattern []rune) (fzf.Offset, int, *[]int) {
 	for _, part := range tokens {
-		if res, pos := algo.FuzzyMatchV2(false, false, true, part.text, mypattern, false, nil); res.Start >= 0 {
+		if res, pos := algo.FuzzyMatchV2(false, false, true, part.text, pattern, false, nil); res.Start >= 0 {
 			sidx := int32(res.Start) + part.prefixLength
 			eidx := int32(res.End) + part.prefixLength
 			if pos != nil {

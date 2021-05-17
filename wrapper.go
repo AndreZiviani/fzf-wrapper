@@ -35,7 +35,7 @@ func NewWrapper(input []string, pattern string) *Wrapper {
 
 func (w *Wrapper) Fuzzy() (bool, error) {
 	var itemIndex int32
-	chunkList := MyNewChunkList(func(item *MyItem, data []byte) bool {
+	trans := (func(item *Item, data []byte) bool {
 
 		item.text = util.ToChars(data)
 		item.text.TrimTrailingWhitespaces()
@@ -46,13 +46,12 @@ func (w *Wrapper) Fuzzy() (bool, error) {
 
 	})
 
+	chunk := &Chunk{}
 	for _, str := range w.InputList {
-		chunkList.Push([]byte(str))
+		chunk.push(trans, []byte(str))
 	}
 
-	snapshot, _ := chunkList.Snapshot()
-
-	merger := MScan(snapshot, w.Pattern)
+	merger := Scan(chunk, w.Pattern)
 
 	for _, list := range merger {
 		for _, v := range list {

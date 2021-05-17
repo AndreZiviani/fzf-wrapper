@@ -1,15 +1,13 @@
 package fzfwrapper
 
-func MScan(chunks []*MyChunk, pattern [][]rune) [][]MyResult {
+func Scan(chunks *Chunk, pattern [][]rune) [][]Result {
 
-	var sliceMatches [][]MyResult
+	var sliceMatches [][]Result
 
-	sliceMatches = make([][]MyResult, 0)
+	sliceMatches = make([][]Result, 0)
 
-	for _, chunk := range chunks {
-		matches := MMatchChunk(chunk, pattern)
-		sliceMatches = append(sliceMatches, matches)
-	}
+	matches := MatchChunk(chunks, pattern)
+	sliceMatches = append(sliceMatches, matches)
 
 	return sliceMatches
 }

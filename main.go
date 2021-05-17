@@ -1,13 +1,7 @@
 package fzfwrapper
 
 import (
-	"runtime"
-
 	"github.com/junegunn/fzf/src/util"
-)
-
-var (
-	partitions int = util.Min(8*runtime.NumCPU(), 32)
 )
 
 const (
@@ -15,7 +9,7 @@ const (
 	fzfChunkSize int = 100
 )
 
-type MyToken struct {
+type Token struct {
 	text         *util.Chars
 	prefixLength int32
 }

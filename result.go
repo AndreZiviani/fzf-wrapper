@@ -8,17 +8,17 @@ import (
 	"github.com/junegunn/fzf/src/util"
 )
 
-type MyResult struct {
-	item   *MyItem
+type Result struct {
+	item   *Item
 	points [4]uint16
 }
 
-func MbuildResult(item *MyItem, offsets []fzf.Offset, score int) MyResult {
+func buildResult(item *Item, offsets []fzf.Offset, score int) Result {
 	if len(offsets) > 1 {
 		sort.Sort(fzf.ByOrder(offsets))
 	}
 
-	result := MyResult{item: item}
+	result := Result{item: item}
 
 	// only sort by score implemented
 	val := uint16(math.MaxUint16)
