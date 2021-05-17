@@ -22,3 +22,7 @@ func (item *Item) AsString(stripAnsi bool) string {
 	}
 	return item.text.ToString()
 }
+
+func (item *Item) Index() int32 {
+	return item.text.Index
+}
