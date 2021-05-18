@@ -13,8 +13,8 @@ type WrapperResult struct {
 }
 
 type Wrapper struct {
-	InputList []string
-	Pattern   [][]rune
+	inputList []string
+	pattern   [][]rune
 	Results   []WrapperResult
 	sort      criterion
 }
@@ -31,26 +31,33 @@ func WithSortBy(c criterion) Option {
 	}
 }
 
-func NewWrapper(input []string, pattern string, options ...Option) *Wrapper {
+func NewWrapper(options ...Option) *Wrapper {
 	opt := opt{-1}
 	for _, o := range options {
 		o(&opt)
 	}
 
-	patternSlice := strings.Split(pattern, " ")
-
 	w := Wrapper{
-		InputList: input,
-		Pattern:   make([][]rune, 0, len(patternSlice)),
-		Results:   make([]WrapperResult, 0),
-		sort:      opt.sort,
-	}
-
-	for _, ps := range patternSlice {
-		w.Pattern = append(w.Pattern, []rune(ps))
+		Results: make([]WrapperResult, 0),
+		sort:    opt.sort,
 	}
 
 	return &w
+}
+
+func (w *Wrapper) SetInput(input []string) {
+	w.inputList = input
+}
+
+func (w *Wrapper) SetPattern(pattern string) {
+	patternSlice := strings.Split(pattern, " ")
+
+	w.pattern = make([][]rune, 0, len(patternSlice))
+
+	for _, ps := range patternSlice {
+		w.pattern = append(w.pattern, []rune(ps))
+	}
+
 }
 
 func (w *Wrapper) Fuzzy() ([]Result, error) {
@@ -66,9 +73,9 @@ func (w *Wrapper) Fuzzy() ([]Result, error) {
 
 	})
 
-	chunk := newChunk(w.InputList, trans)
+	chunk := newChunk(w.inputList, trans)
 
-	merger := MatchChunk(chunk, w.Pattern)
+	merger := MatchChunk(chunk, w.pattern)
 
 	if w.sort != -1 {
 		switch w.sort {
