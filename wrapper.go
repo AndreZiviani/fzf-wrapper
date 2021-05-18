@@ -66,10 +66,7 @@ func (w *Wrapper) Fuzzy() (bool, error) {
 
 	})
 
-	chunk := &Chunk{}
-	for _, str := range w.InputList {
-		chunk.push(trans, []byte(str))
-	}
+	chunk := newChunk(w.InputList, trans)
 
 	merger := MatchChunk(chunk, w.Pattern)
 
