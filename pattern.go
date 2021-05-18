@@ -9,8 +9,10 @@ func MatchChunk(chunk *Chunk, pattern [][]rune) []Result {
 	matches := []Result{}
 	items := chunk.items
 	for idx := 0; idx < chunk.count; idx++ {
-		match, _, _ := MatchItem(&items[idx], pattern)
+		match, offsets, pos := MatchItem(&items[idx], pattern)
 		if match != nil {
+			match.Offsets = offsets
+			match.Pos = pos
 			matches = append(matches, *match)
 		}
 	}
@@ -33,29 +35,41 @@ func extendedMatch(item *Item, pattern [][]rune) ([]fzf.Offset, int, *[]int) {
 	input := []Token{{&item.text, 0}}
 
 	offsets := []fzf.Offset{}
+	allPos := &[]int{}
 	var totalScore int
 
 	for _, term := range pattern {
 		matched := false
 		var offset fzf.Offset
 		var currentScore int
-		off, score, _ := iter(input, term)
+
+		off, score, pos := iter(input, term)
+
 		if sidx := off[0]; sidx >= 0 {
 			offset, currentScore = off, score
 			matched = true
+
+			if pos != nil {
+				*allPos = append(*allPos, *pos...)
+			} else {
+				for idx := off[0]; idx < off[1]; idx++ {
+					*allPos = append(*allPos, int(idx))
+				}
+			}
 		}
+
 		if matched {
 			offsets = append(offsets, offset)
 			totalScore += currentScore
 		}
 	}
 
-	return offsets, totalScore, nil
+	return offsets, totalScore, allPos
 }
 
 func iter(tokens []Token, pattern []rune) (fzf.Offset, int, *[]int) {
 	for _, part := range tokens {
-		if res, pos := algo.FuzzyMatchV2(false, false, true, part.text, pattern, false, nil); res.Start >= 0 {
+		if res, pos := algo.FuzzyMatchV2(false, true, true, part.text, pattern, true, nil); res.Start >= 0 {
 			sidx := int32(res.Start) + part.prefixLength
 			eidx := int32(res.End) + part.prefixLength
 			if pos != nil {

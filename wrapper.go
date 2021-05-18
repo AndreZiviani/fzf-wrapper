@@ -53,7 +53,7 @@ func NewWrapper(input []string, pattern string, options ...Option) *Wrapper {
 	return &w
 }
 
-func (w *Wrapper) Fuzzy() (bool, error) {
+func (w *Wrapper) Fuzzy() ([]Result, error) {
 	var itemIndex int32
 	trans := (func(item *Item, data []byte) bool {
 
@@ -77,12 +77,5 @@ func (w *Wrapper) Fuzzy() (bool, error) {
 		}
 	}
 
-	for _, v := range merger {
-		result := WrapperResult{
-			Text:  v.item.AsString(false),
-			Score: v.points,
-		}
-		w.Results = append(w.Results, result)
-	}
-	return true, nil
+	return merger, nil
 }

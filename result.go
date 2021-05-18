@@ -1,9 +1,12 @@
 package fzfwrapper
 
 import (
+	"bytes"
+	"fmt"
 	"math"
 	"sort"
 
+	"github.com/fatih/color"
 	"github.com/junegunn/fzf/src"
 	"github.com/junegunn/fzf/src/util"
 )
@@ -19,8 +22,10 @@ const (
 )
 
 type Result struct {
-	item   *Item
-	points [4]uint16
+	Item    *Item
+	Points  [4]uint16
+	Offsets []fzf.Offset
+	Pos     *[]int
 }
 
 func buildResult(item *Item, offsets []fzf.Offset, score int) Result {
@@ -29,7 +34,7 @@ func buildResult(item *Item, offsets []fzf.Offset, score int) Result {
 		sort.Sort(fzf.ByOrder(offsets))
 	}
 
-	result := Result{item: item}
+	result := Result{Item: item}
 
 	for idx, criterion := range sortCriteria {
 		val := uint16(math.MaxUint16)
@@ -42,10 +47,97 @@ func buildResult(item *Item, offsets []fzf.Offset, score int) Result {
 
 		}
 
-		result.points[3-idx] = val
+		result.Points[3-idx] = val
 	}
 
 	return result
+}
+
+func (r *Result) HighlightResult() string {
+	text := r.Item.AsString(false)
+
+	if r.Pos == nil {
+		return text
+	}
+
+	// sort offsets
+	charOffsets := make([]fzf.Offset, len(*r.Pos))
+	for idx, p := range *r.Pos {
+		offset := fzf.Offset{int32(p), int32(p + 1)}
+		charOffsets[idx] = offset
+	}
+	sort.Sort(ByOrder(charOffsets))
+
+	offsets := MergeOffsets(charOffsets)
+
+	m := color.New(color.FgRed)
+	m.EnableColor()
+	matchColor := m.SprintFunc()
+	//matchColor := color.New(108).SprintFunc()
+
+	begin := offsets[0][0]
+	end := offsets[0][1]
+	idx := end
+
+	dest := bytes.NewBufferString("")
+
+	if begin == 0 {
+		// match is already at first char
+		// start color and copy the first matched substring
+		fmt.Fprintf(dest, "%s", matchColor(text[begin:end]))
+	} else {
+		// match is not first char
+		// copy the substring until the first match,
+		// begin color and copy the first matched substring
+		fmt.Fprintf(dest, "%s%s", text[:begin], matchColor(text[begin:end]))
+	}
+
+	l := len(offsets)
+
+	for off := 1; off < l; off++ {
+		begin = offsets[off][0]
+		end = offsets[off][1]
+		if idx == begin { // need to color
+			fmt.Fprintf(dest, "%s", matchColor(text[begin:end]))
+			idx = end
+			continue
+		}
+
+		// end color
+		fmt.Fprintf(dest, "%s", text[idx:begin])
+
+		idx = begin
+	}
+
+	fmt.Fprintf(dest, "%s", text[idx:])
+	return dest.String()
+}
+
+func MergeOffsets(matchOffsets []fzf.Offset) []fzf.Offset {
+	offsets := []fzf.Offset{}
+
+	begin := matchOffsets[0][0]
+	end := matchOffsets[0][0]
+	for _, off := range matchOffsets {
+		if end == off[0] {
+			end = off[1]
+			continue
+		}
+		offsets = append(offsets, fzf.Offset{begin, end})
+		begin = off[0]
+		end = off[1]
+	}
+
+	offsets = append(offsets, fzf.Offset{begin, end})
+
+	return offsets
+}
+
+func beginColor() string {
+	return fmt.Sprintf("\033[1;108m")
+}
+func endColor() string {
+	return fmt.Sprintf("\033[0m")
 }
 
 // ByOrder is for sorting substring offsets
@@ -97,8 +189,8 @@ func (a ByRelevanceTac) Less(i, j int) bool {
 
 func compareRanks(irank Result, jrank Result, tac bool) bool {
 	for idx := 3; idx >= 0; idx-- {
-		left := irank.points[idx]
-		right := jrank.points[idx]
+		left := irank.Points[idx]
+		right := jrank.Points[idx]
 		if left < right {
 			return true
 		} else if left > right {
@@ -106,5 +198,5 @@ func compareRanks(irank Result, jrank Result, tac bool) bool {
 		}
 	}
 
-	return (irank.item.Index() <= jrank.item.Index()) != tac
+	return (irank.Item.Index() <= jrank.Item.Index()) != tac
 }
