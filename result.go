@@ -3,12 +3,10 @@ package fzfwrapper
 import (
 	"bytes"
 	"fmt"
-	"math"
 	"sort"
 
 	"github.com/fatih/color"
 	"github.com/junegunn/fzf/src"
-	"github.com/junegunn/fzf/src/util"
 )
 
 // Sort criteria
@@ -18,11 +16,13 @@ const (
 	ByScore    criterion = iota // sort by score
 	ByLength                    // sort by string length
 	ByPosition                  // sort by match location
+
+	maxInt = int(^uint(0) >> 1)
 )
 
 type Result struct {
 	Item    *Item
-	Points  [4]uint16
+	Points  [4]int
 	Offsets []fzf.Offset
 	Pos     *[]int
 }
@@ -35,15 +35,15 @@ func buildResult(item *Item, offsets []fzf.Offset, score int, sortBy []criterion
 	result := Result{Item: item}
 
 	for idx, criterion := range sortBy {
-		val := uint16(math.MaxUint16)
+		val := maxInt
 
 		switch criterion {
 		case ByScore:
-			val = math.MaxUint16 - util.AsUint16(score)
+			val = maxInt - score
 		case ByPosition:
-			val = util.AsUint16(int(offsets[0][0])) // position of first match
+			val = int(offsets[0][0]) // position of first match
 		case ByLength:
-			val = item.TrimLength()
+			val = int(item.TrimLength())
 		}
 
 		result.Points[3-idx] = val
