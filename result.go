@@ -60,8 +60,15 @@ func (r *Result) HighlightResult() string {
 	}
 
 	// sort offsets
-	charOffsets := make([]fzf.Offset, len(*r.Pos))
-	for idx, p := range *r.Pos {
+	var pos []int
+	pos = *r.Pos
+
+	if len(pos) == 0 {
+		return text
+	}
+
+	charOffsets := make([]fzf.Offset, len(pos))
+	for idx, p := range pos {
 		offset := fzf.Offset{int32(p), int32(p + 1)}
 		charOffsets[idx] = offset
 	}
@@ -95,17 +102,20 @@ func (r *Result) HighlightResult() string {
 
 	for off := 1; off < l; off++ {
 		begin = offsets[off][0]
-		end = offsets[off][1]
-		if idx == begin { // need to color
-			fmt.Fprintf(dest, "%s", matchColor(text[begin:end]))
-			idx = end
-			continue
+
+		if idx > begin {
+			panic(fmt.Sprintf("idx: %d, off: %d, offsets: %v\npos: %v\n", idx, off, offsets, *r.Pos))
+		}
+		if idx != begin { // print not matched substring
+			fmt.Fprintf(dest, "%s", text[idx:begin])
 		}
 
-		// end color
-		fmt.Fprintf(dest, "%s", text[idx:begin])
+		end = offsets[off][1] // somehow idx was referencing end instead of copying its value
 
-		idx = begin
+		// end color
+		fmt.Fprintf(dest, "%s", matchColor(text[begin:end]))
+
+		idx = end
 	}
 
 	fmt.Fprintf(dest, "%s", text[idx:])
@@ -118,6 +128,11 @@ func MergeOffsets(matchOffsets []fzf.Offset) []fzf.Offset {
 	begin := matchOffsets[0][0]
 	end := matchOffsets[0][0]
 	for _, off := range matchOffsets {
+		if begin <= off[0] && end == off[1] {
+			// duplicated offset
+			continue
+		}
+
 		if end == off[0] {
 			end = off[1]
 			continue
