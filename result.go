@@ -3,12 +3,10 @@ package fzfwrapper
 import (
 	"bytes"
 	"fmt"
-	"math"
 	"sort"
 
 	"github.com/fatih/color"
 	"github.com/junegunn/fzf/src"
-	"github.com/junegunn/fzf/src/util"
 )
 
 // Sort criteria
@@ -18,11 +16,13 @@ const (
 	ByScore    criterion = iota // sort by score
 	ByLength                    // sort by string length
 	ByPosition                  // sort by match location
+
+	maxInt = int(^uint(0) >> 1)
 )
 
 type Result struct {
 	Item    *Item
-	Points  [4]uint16
+	Points  [4]int
 	Offsets []fzf.Offset
 	Pos     *[]int
 }
@@ -35,15 +35,15 @@ func buildResult(item *Item, offsets []fzf.Offset, score int, sortBy []criterion
 	result := Result{Item: item}
 
 	for idx, criterion := range sortBy {
-		val := uint16(math.MaxUint16)
+		val := maxInt
 
 		switch criterion {
 		case ByScore:
-			val = math.MaxUint16 - util.AsUint16(score)
+			val = maxInt - score
 		case ByPosition:
-			val = util.AsUint16(int(offsets[0][0])) // position of first match
+			val = int(offsets[0][0]) // position of first match
 		case ByLength:
-			val = item.TrimLength()
+			val = int(item.TrimLength())
 		}
 
 		result.Points[3-idx] = val
@@ -60,8 +60,15 @@ func (r *Result) HighlightResult() string {
 	}
 
 	// sort offsets
-	charOffsets := make([]fzf.Offset, len(*r.Pos))
-	for idx, p := range *r.Pos {
+	var pos []int
+	pos = *r.Pos
+
+	if len(pos) == 0 {
+		return text
+	}
+
+	charOffsets := make([]fzf.Offset, len(pos))
+	for idx, p := range pos {
 		offset := fzf.Offset{int32(p), int32(p + 1)}
 		charOffsets[idx] = offset
 	}
@@ -95,17 +102,20 @@ func (r *Result) HighlightResult() string {
 
 	for off := 1; off < l; off++ {
 		begin = offsets[off][0]
-		end = offsets[off][1]
-		if idx == begin { // need to color
-			fmt.Fprintf(dest, "%s", matchColor(text[begin:end]))
-			idx = end
-			continue
+
+		if idx > begin {
+			panic(fmt.Sprintf("idx: %d, off: %d, offsets: %v\npos: %v\n", idx, off, offsets, *r.Pos))
+		}
+		if idx != begin { // print not matched substring
+			fmt.Fprintf(dest, "%s", text[idx:begin])
 		}
 
-		// end color
-		fmt.Fprintf(dest, "%s", text[idx:begin])
+		end = offsets[off][1] // somehow idx was referencing end instead of copying its value
 
-		idx = begin
+		// end color
+		fmt.Fprintf(dest, "%s", matchColor(text[begin:end]))
+
+		idx = end
 	}
 
 	fmt.Fprintf(dest, "%s", text[idx:])
@@ -118,6 +128,11 @@ func MergeOffsets(matchOffsets []fzf.Offset) []fzf.Offset {
 	begin := matchOffsets[0][0]
 	end := matchOffsets[0][0]
 	for _, off := range matchOffsets {
+		if begin <= off[0] && end == off[1] {
+			// duplicated offset
+			continue
+		}
+
 		if end == off[0] {
 			end = off[1]
 			continue
