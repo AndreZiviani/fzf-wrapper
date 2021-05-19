@@ -15,10 +15,9 @@ import (
 type criterion int
 
 const (
-	ByScore  criterion = iota // dont sort
-	ByLength                  // sort by string length
-	ByBegin                   // not implemented
-	ByEnd                     // not implemented
+	ByScore    criterion = iota // sort by score
+	ByLength                    // sort by string length
+	ByPosition                  // sort by match location
 )
 
 type Result struct {
@@ -28,23 +27,23 @@ type Result struct {
 	Pos     *[]int
 }
 
-func buildResult(item *Item, offsets []fzf.Offset, score int) Result {
-	sortCriteria := []criterion{ByScore, ByLength}
+func buildResult(item *Item, offsets []fzf.Offset, score int, sortBy []criterion) Result {
 	if len(offsets) > 1 {
 		sort.Sort(fzf.ByOrder(offsets))
 	}
 
 	result := Result{Item: item}
 
-	for idx, criterion := range sortCriteria {
+	for idx, criterion := range sortBy {
 		val := uint16(math.MaxUint16)
 
 		switch criterion {
 		case ByScore:
 			val = math.MaxUint16 - util.AsUint16(score)
+		case ByPosition:
+			val = util.AsUint16(int(offsets[0][0])) // position of first match
 		case ByLength:
 			val = item.TrimLength()
-
 		}
 
 		result.Points[3-idx] = val

@@ -16,23 +16,27 @@ type Wrapper struct {
 	inputList []string
 	pattern   [][]rune
 	Results   []WrapperResult
-	sort      criterion
+	sort      []criterion
 }
 
 type Option func(opt *opt)
 
 type opt struct {
-	sort criterion
+	sort []criterion
 }
 
-func WithSortBy(c criterion) Option {
+func WithSortBy(c ...criterion) Option {
 	return func(o *opt) {
-		o.sort = c
+		sort := make([]criterion, 0)
+		for _, s := range c {
+			sort = append(sort, s)
+		}
+		o.sort = sort
 	}
 }
 
 func NewWrapper(options ...Option) *Wrapper {
-	opt := opt{-1}
+	opt := opt{[]criterion{}}
 	for _, o := range options {
 		o(&opt)
 	}
@@ -75,13 +79,11 @@ func (w *Wrapper) Fuzzy() ([]Result, error) {
 
 	chunk := newChunk(w.inputList, trans)
 
-	merger := MatchChunk(chunk, w.pattern)
+	pattern := NewPattern(chunk, w.pattern, w.sort)
+	merger := pattern.MatchChunk()
 
-	if w.sort != -1 {
-		switch w.sort {
-		case ByLength:
-			sort.Sort(ByRelevance(merger))
-		}
+	if len(w.sort) > 0 {
+		sort.Sort(ByRelevance(merger))
 	}
 
 	return merger, nil
