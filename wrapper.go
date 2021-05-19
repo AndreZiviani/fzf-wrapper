@@ -7,15 +7,9 @@ import (
 	"github.com/junegunn/fzf/src/util"
 )
 
-type WrapperResult struct {
-	Text  string
-	Score [4]uint16
-}
-
 type Wrapper struct {
 	inputList []string
 	pattern   [][]rune
-	Results   []WrapperResult
 	sort      []criterion
 }
 
@@ -42,8 +36,7 @@ func NewWrapper(options ...Option) *Wrapper {
 	}
 
 	w := Wrapper{
-		Results: make([]WrapperResult, 0),
-		sort:    opt.sort,
+		sort: opt.sort,
 	}
 
 	return &w
