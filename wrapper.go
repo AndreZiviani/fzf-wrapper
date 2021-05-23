@@ -7,8 +7,13 @@ import (
 	"github.com/junegunn/fzf/src/util"
 )
 
+type InputData interface {
+	FzfInputList() []string
+	FzfInputLen() int
+}
+
 type Wrapper struct {
-	inputList []string
+	inputData InputData
 	pattern   [][]rune
 	sort      []criterion
 }
@@ -42,8 +47,8 @@ func NewWrapper(options ...Option) *Wrapper {
 	return &w
 }
 
-func (w *Wrapper) SetInput(input []string) {
-	w.inputList = input
+func (w *Wrapper) SetInput(input InputData) {
+	w.inputData = input
 }
 
 func (w *Wrapper) SetPattern(pattern string) {
@@ -70,14 +75,14 @@ func (w *Wrapper) Fuzzy() ([]Result, error) {
 
 	})
 
-	chunk := newChunk(w.inputList, trans)
+	chunk := newChunk(w.inputData, trans)
 
 	pattern := NewPattern(chunk, w.pattern, w.sort)
-	merger := pattern.MatchChunk()
+	results := pattern.MatchChunk()
 
 	if len(w.sort) > 0 {
-		sort.Sort(ByRelevance(merger))
+		sort.Sort(ByRelevance(results))
 	}
 
-	return merger, nil
+	return results, nil
 }
