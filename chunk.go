@@ -7,12 +7,12 @@ type Chunk struct {
 	count int
 }
 
-func newChunk(input []string, trans ItemBuilder) *Chunk {
-	size := len(input)
+func newChunk(input InputData, trans ItemBuilder) *Chunk {
+	size := input.FzfInputLen()
 	chunk := Chunk{}
 	chunk.items = make([]Item, size)
 
-	for _, str := range input {
+	for _, str := range input.FzfInputList() {
 		chunk.push(trans, []byte(str))
 	}
 
