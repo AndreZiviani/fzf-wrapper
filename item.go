@@ -1,14 +1,11 @@
 package fzfwrapper
 
 import (
-	"github.com/junegunn/fzf/src"
 	"github.com/junegunn/fzf/src/util"
 )
 
 type Item struct {
-	text        util.Chars
-	transformed *[]fzf.Token
-	origText    *[]byte
+	text util.Chars
 }
 
 func (item *Item) TrimLength() uint16 {
@@ -17,9 +14,6 @@ func (item *Item) TrimLength() uint16 {
 
 // AsString returns the original string
 func (item *Item) AsString(stripAnsi bool) string {
-	if item.origText != nil {
-		return string(*item.origText)
-	}
 	return item.text.ToString()
 }
 
