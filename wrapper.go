@@ -67,7 +67,7 @@ func (w *Wrapper) Fuzzy() ([]Result, error) {
 	trans := (func(item *Item, data []byte) bool {
 
 		item.text = util.ToChars(data)
-		item.text.TrimTrailingWhitespaces()
+		item.text.TrimTrailingWhitespaces(0)
 		item.text.Index = itemIndex
 
 		itemIndex++

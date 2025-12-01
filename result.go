@@ -147,13 +147,6 @@ func MergeOffsets(matchOffsets []fzf.Offset) []fzf.Offset {
 	return offsets
 }
 
-func beginColor() string {
-	return fmt.Sprintf("\033[1;108m")
-}
-func endColor() string {
-	return fmt.Sprintf("\033[0m")
-}
-
 // ByOrder is for sorting substring offsets
 type ByOrder []fzf.Offset
 
